@@ -21,14 +21,13 @@ def get_file_path(*subdirs, filename=None):
     full_path = full_path.replace("/", "\\")
     return full_path
 
-# Read in the paraquet file
-data = pd.read_parquet(get_file_path('ticker data', filename="combined.parquet"))
+# Read in the paraquet files
+train = pd.read_parquet(get_file_path('ticker data', filename="train.parquet"))
+test = pd.read_parquet(get_file_path('ticker data', filename="test.parquet"))
 
 # Define the list of tickers
-tickers = ['AAPL', 'NVDA', 'MSFT', 'AMZN', 'SPY', 'QQQ', 'SHOP',
-           'TSLA', 'AMD', 'GOOG', 'META', 'BABA', 'BIDU', 'NFLX',
-           'TWTR', 'INTC', 'MU', 'BAC', 'JPM', 'WMT',
-           'DIS', 'T', 'V', 'MA', 'PYPL', 'SQ', 'DIS']
+tickers = ['AAPL', 'NVDA', 'MSFT', 'AMZN', 'SPY',
+           'QQQ', 'TSLA', 'GOOG', 'META', 'AMD']
 
 # Define the list of target columns
 target_cols = []
@@ -37,12 +36,12 @@ for ticker in tickers:
 
 # Get the features and target arrays
 for col in target_cols:
-    x = data.drop(columns=[col])
-y = data[target_cols].values
+    x_train = train.drop(columns=[col])
+y_train = train[target_cols].values
 
-# Split the data into training, validation, and test sets (80% for training, 10% for validation, and 10% for testing)
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.10, shuffle=False)
-x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.10, shuffle=False)
+for col in target_cols:
+    x_test = test.drop(columns=[col])
+y_test = test[target_cols].values
 
 # Define callbacks
 # tensorboard_callback = tf.keras.callbacks.TensorBoard(
@@ -63,7 +62,7 @@ def run_model():
     clf = ak.TimeseriesForecaster(
         max_trials=250,
         lookback=24,
-        project_name='conf_alpha1',
+        project_name='conf_alpha2',
         overwrite=False,
         directory=get_file_path('models')
     )
@@ -72,7 +71,7 @@ def run_model():
 clf = run_model()
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=None, shuffle=False, callbacks=callbacks)
+clf.fit(x_train, y_train, epochs=None, shuffle=False, callbacks=callbacks)
 
 # Evaluate the model but if there is an error, clear the session and try again
 try:
