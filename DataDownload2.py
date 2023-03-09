@@ -73,9 +73,6 @@ for ticker in tickers:
     # Add True Strength Index (TSI) to the data
     df['tsi'] = ta.momentum.tsi(df['Close'], 25, 13)
 
-    # # Add Average Directional Movement Index (ADX) to the data
-    # df['adx'] = ta.trend.adx(df['High'], df['Low'], df['Close'], 14)
-
     # Add On Balance Volume (OBV) to the data
     df['obv'] = ta.volume.on_balance_volume(df['Close'], df['Volume'])
 
