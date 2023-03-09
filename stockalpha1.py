@@ -21,19 +21,19 @@ def get_file_path(*subdirs, filename=None):
     full_path = full_path.replace("/", "\\")
     return full_path
 
-# Read in the paraquet file
-data = pd.read_parquet(get_file_path(filename="TEST1.parquet"))
+# Read in the parquet file
+train = pd.read_parquet(get_file_path('ticker data', filename="AAPL_TRAIN.parquet"))
+test = pd.read_parquet(get_file_path('ticker data', filename="AAPL_TEST.parquet"))
 
 # Define the target column
-target_col = 'Open'
+target_col = 'AAPL_Open'
 
 # Get the features and target arrays
-x = data.drop([target_col], axis=1).values
-y = data[target_col].values
+x_train = train.drop([target_col], axis=1).values
+y_train = train[target_col].values
 
-# Split the data into training, validation, and test sets (80% for training, 10% for validation, and 10% for testing)
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.10, shuffle=False)
-x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.10, shuffle=False)
+x_test = test.drop([target_col], axis=1).values
+y_test= test[target_col].values
 
 # Define callbacks
 # tensorboard_callback = tf.keras.callbacks.TensorBoard(
@@ -52,9 +52,9 @@ callbacks = [stopping_callback]
 # Initialize the model
 def run_model():
     clf = ak.TimeseriesForecaster(
-        max_trials=250,
-        lookback=21,
-        project_name='alpha1',
+        max_trials=1000,
+        lookback=5,
+        project_name='alpha3',
         overwrite=False,
         directory=get_file_path('models')
     )
@@ -63,7 +63,7 @@ def run_model():
 clf = run_model()
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=None, shuffle=False, callbacks=callbacks)
+clf.fit(x_train, y_train, epochs=None, shuffle=False, callbacks=callbacks)
 
 # Evaluate the model but if there is an error, clear the session and try again
 try:

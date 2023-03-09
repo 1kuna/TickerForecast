@@ -21,7 +21,7 @@ def get_file_path(*subdirs, filename=None):
     full_path = full_path.replace("/", "\\")
     return full_path
 
-# Read in the paraquet files
+# Read in the parquet files
 train = pd.read_parquet(get_file_path('ticker data', filename="train.parquet"))
 test = pd.read_parquet(get_file_path('ticker data', filename="test.parquet"))
 
@@ -51,7 +51,7 @@ y_test = test[target_cols].values
 # )
 stopping_callback = tf.keras.callbacks.EarlyStopping(
     monitor="val_loss",
-    patience=30
+    patience=50
 )
 
 # Define callbacks list
@@ -60,9 +60,9 @@ callbacks = [stopping_callback]
 # Initialize the model
 def run_model():
     clf = ak.TimeseriesForecaster(
-        max_trials=250,
-        lookback=24,
-        project_name='conf_alpha2',
+        lookback=1,
+        max_trials=1000,
+        project_name='conf_alpha1',
         overwrite=False,
         directory=get_file_path('models')
     )

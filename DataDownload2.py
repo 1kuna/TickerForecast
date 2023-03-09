@@ -20,8 +20,8 @@ tickers = ['AAPL', 'NVDA', 'MSFT', 'AMZN', 'SPY',
 # Loop through list of tickers and append data to a dataframe
 for ticker in tickers:
     # Get daily historical data for the ticker symbol for the maximum date range then append 60 minute intervals into the data
-    df1 = yf.download(ticker, start='2014-01-01', interval='1d', progress=True, auto_adjust=True, rounding=True, prepost=True)
-    df2 = yf.download(ticker, start='2021-06-01', interval='60m', progress=True, auto_adjust=True, rounding=True, prepost=True)
+    df1 = yf.download(ticker, start='2014-01-01', interval='1d', progress=True, auto_adjust=True, rounding=True)
+    df2 = yf.download(ticker, start='2021-06-01', interval='60m', progress=True, auto_adjust=True, rounding=True)
 
     # Sort by date and time and drop duplicates
     df1.sort_index(inplace=True)
@@ -154,6 +154,10 @@ for ticker in tickers:
     # Save the data to a csv file
     train.to_csv(get_file_path('ticker data', filename=f'{ticker}_TRAIN.csv'))
     test.to_csv(get_file_path('ticker data', filename=f'{ticker}_TEST.csv'))
+
+    # Save the data to a parquet file
+    train.to_parquet(get_file_path('ticker data', filename=f'{ticker}_TRAIN.parquet'))
+    test.to_parquet(get_file_path('ticker data', filename=f'{ticker}_TEST.parquet'))
 
 # Append all the csv files into one dataframe keeping the date and time as the index
 train = pd.concat([pd.read_csv(f, index_col='datetime') for f in glob.glob(get_file_path('ticker data', filename='*TRAIN.csv'))], axis=1)
