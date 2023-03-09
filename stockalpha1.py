@@ -22,7 +22,7 @@ def get_file_path(*subdirs, filename=None):
     return full_path
 
 # Read in the paraquet file
-data = pd.read_parquet(get_file_path(filename="TEST2.parquet"))
+data = pd.read_parquet(get_file_path(filename="TEST1.parquet"))
 
 # Define the target column
 target_col = 'Open'
@@ -53,8 +53,8 @@ callbacks = [stopping_callback]
 def run_model():
     clf = ak.TimeseriesForecaster(
         max_trials=250,
-        lookback=24,
-        project_name='alpha2',
+        lookback=21,
+        project_name='alpha1',
         overwrite=False,
         directory=get_file_path('models')
     )

@@ -3,6 +3,8 @@ import ta
 import pandas as pd
 import os
 import glob
+import time
+from datetime import datetime
 
 # Define function to get full file path
 def get_file_path(*subdirs, filename=None):
@@ -16,14 +18,21 @@ def get_file_path(*subdirs, filename=None):
 # Define the list of tickers to download
 tickers = ['AAPL', 'NVDA', 'MSFT', 'AMZN', 'SPY', 'QQQ', 'SHOP',
            'TSLA', 'AMD', 'GOOG', 'META', 'BABA', 'BIDU', 'NFLX',
-           'TWTR', 'INTC', 'MU', 'BAC', 'JPM', 'WMT',
+           'INTC', 'MU', 'BAC', 'JPM', 'WMT',
            'DIS', 'T', 'V', 'MA', 'PYPL', 'SQ', 'DIS']
+
+# Define a variable for the date 59 days ago
+d59 = time.strftime('%Y-%m-%d', time.localtime(time.time() - 59 * 24 * 60 * 60))
+
+# Define a variable for the date 730 days ago
+d730 = time.strftime('%Y-%m-%d', time.localtime(time.time() - 729 * 24 * 60 * 60))
 
 # Loop through list of tickers and append data to a dataframe
 for ticker in tickers:
     # Get daily historical data for the ticker symbol for the maximum date range then append 60 minute intervals into the data
-    df = yf.download(ticker, start='2016-01-01', interval='1d', progress=True, auto_adjust=True, rounding=True)
-    df = df.append(yf.download(ticker, start='2021-06-01', interval='60m', progress=True, auto_adjust=True, rounding=True))
+    df = yf.download(ticker, start='2010-01-01', interval='1d', auto_adjust=True, rounding=True, progress=False)
+    df = df.append(yf.download(ticker, start=d730, interval='60m', auto_adjust=True, rounding=True, progress=False))
+    # df = df.append(yf.download(ticker, start=d59, interval='15m', auto_adjust=True, rounding=True, ignore_tz=True, progress=True))
 
     # Sort by date and time and drop duplicates
     df.sort_index(inplace=True)

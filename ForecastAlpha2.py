@@ -27,7 +27,7 @@ data = pd.read_parquet(get_file_path('ticker data', filename="combined.parquet")
 # Define the list of tickers
 tickers = ['AAPL', 'NVDA', 'MSFT', 'AMZN', 'SPY', 'QQQ', 'SHOP',
            'TSLA', 'AMD', 'GOOG', 'META', 'BABA', 'BIDU', 'NFLX',
-           'TWTR', 'INTC', 'MU', 'BAC', 'JPM', 'WMT',
+           'INTC', 'MU', 'BAC', 'JPM', 'WMT',
            'DIS', 'T', 'V', 'MA', 'PYPL', 'SQ', 'DIS']
 
 # Define the list of target columns
