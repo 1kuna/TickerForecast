@@ -20,7 +20,7 @@ tickers = ['AAPL', 'NVDA', 'MSFT', 'AMZN', 'SPY',
 # Loop through list of tickers and append data to a dataframe
 for ticker in tickers:
     # Get daily historical data for the ticker symbol for the maximum date range then append 60 minute intervals into the data
-    df1 = yf.download(ticker, start='2014-01-01', interval='1d', progress=True, auto_adjust=True, rounding=True)
+    df1 = yf.download(ticker, period='max', interval='1d', progress=True, auto_adjust=True, rounding=True)
     df2 = yf.download(ticker, start='2021-06-01', interval='60m', progress=True, auto_adjust=True, rounding=True)
 
     # Sort by date and time and drop duplicates
@@ -129,17 +129,22 @@ for ticker in tickers:
     df1 = df1.add_prefix(ticker + '_')
     df2 = df2.add_prefix(ticker + '_')
 
-    # Split the data into train and test sets; 80% train, 20% test
-    train1 = df1[:int(len(df1) * 0.8)]
-    train2 = df2[:int(len(df2) * 0.8)]
-    test1 = df1[int(len(df1) * 0.8):]
-    test2 = df2[int(len(df2) * 0.8):]
+    # Split the data into train and test sets; 80% train, 10% validation, 10% test
+    train1 = df1.iloc[:int(len(df1) * 0.8)]
+    train2 = df2.iloc[:int(len(df2) * 0.8)]
+    test1 = df1.iloc[int(len(df1) * 0.8):int(len(df1) * 0.9)]
+    test2 = df2.iloc[int(len(df2) * 0.8):int(len(df2) * 0.9)]
+    val1 = df1.iloc[int(len(df1) * 0.9):]
+    val2 = df2.iloc[int(len(df2) * 0.9):]
 
-    # Append the train and test sets together
+    # Append the train, validation, and test sets together
     train = train1.append(train2)
+    val = val1.append(val2)
     test = test1.append(test2)
-
+    
     # Sort by date and time and drop duplicates
+    val.sort_index(inplace=True)
+    val.drop_duplicates(inplace=True)
     test.sort_index(inplace=True)
     test.drop_duplicates(inplace=True)
 
@@ -147,30 +152,39 @@ for ticker in tickers:
     train = train.reset_index()
     train = train.rename(columns={'index': 'datetime'})
     train = train.set_index('datetime')
+    val = val.reset_index()
+    val = val.rename(columns={'index': 'datetime'})
+    val = val.set_index('datetime')
     test = test.reset_index()
     test = test.rename(columns={'index': 'datetime'})
     test = test.set_index('datetime')
 
     # Save the data to a csv file
     train.to_csv(get_file_path('ticker data', filename=f'{ticker}_TRAIN.csv'))
+    val.to_csv(get_file_path('ticker data', filename=f'{ticker}_VAL.csv'))
     test.to_csv(get_file_path('ticker data', filename=f'{ticker}_TEST.csv'))
 
     # Save the data to a parquet file
     train.to_parquet(get_file_path('ticker data', filename=f'{ticker}_TRAIN.parquet'))
+    val.to_parquet(get_file_path('ticker data', filename=f'{ticker}_VAL.parquet'))
     test.to_parquet(get_file_path('ticker data', filename=f'{ticker}_TEST.parquet'))
 
 # Append all the csv files into one dataframe keeping the date and time as the index
 train = pd.concat([pd.read_csv(f, index_col='datetime') for f in glob.glob(get_file_path('ticker data', filename='*TRAIN.csv'))], axis=1)
+val = pd.concat([pd.read_csv(f, index_col='datetime') for f in glob.glob(get_file_path('ticker data', filename='*VAL.csv'))], axis=1)
 test = pd.concat([pd.read_csv(f, index_col='datetime') for f in glob.glob(get_file_path('ticker data', filename='*TEST.csv'))], axis=1)
 
 # Drop all rows with NaN values
 train.dropna(inplace=True, axis=0, how='any')
+val.dropna(inplace=True, axis=0, how='any')
 test.dropna(inplace=True, axis=0, how='any')
 
 # Save the data to a csv file
 train.to_csv(get_file_path('ticker data', filename='train.csv'))
+val.to_csv(get_file_path('ticker data', filename='val.csv'))
 test.to_csv(get_file_path('ticker data', filename='test.csv'))
 
 # Save the data to a parquet file
 train.to_parquet(get_file_path('ticker data', filename='train.parquet'))
+val.to_parquet(get_file_path('ticker data', filename='val.parquet'))
 test.to_parquet(get_file_path('ticker data', filename='test.parquet'))

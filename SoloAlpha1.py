@@ -23,6 +23,7 @@ def get_file_path(*subdirs, filename=None):
 
 # Read in the parquet file
 train = pd.read_parquet(get_file_path('ticker data', filename="AAPL_TRAIN.parquet"))
+val = pd.read_parquet(get_file_path('ticker data', filename="AAPL_VAL.parquet"))
 test = pd.read_parquet(get_file_path('ticker data', filename="AAPL_TEST.parquet"))
 
 # Define the target column
@@ -31,6 +32,9 @@ target_col = 'AAPL_Open'
 # Get the features and target arrays
 x_train = train.drop([target_col], axis=1).values
 y_train = train[target_col].values
+
+x_val = val.drop([target_col], axis=1).values
+y_val = val[target_col].values
 
 x_test = test.drop([target_col], axis=1).values
 y_test= test[target_col].values
@@ -53,7 +57,7 @@ callbacks = [stopping_callback]
 def run_model():
     clf = ak.TimeseriesForecaster(
         max_trials=1000,
-        lookback=5,
+        lookback=10,
         project_name='alpha3',
         overwrite=False,
         directory=get_file_path('models')
@@ -63,7 +67,7 @@ def run_model():
 clf = run_model()
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, epochs=None, shuffle=False, callbacks=callbacks)
+clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=None, shuffle=False, callbacks=callbacks)
 
 # Evaluate the model but if there is an error, clear the session and try again
 try:
