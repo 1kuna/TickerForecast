@@ -22,12 +22,12 @@ def get_file_path(*subdirs, filename=None):
     return full_path
 
 # Read in the parquet file
-train = pd.read_parquet(get_file_path('ticker data', filename="AAPL_TRAIN.parquet"))
-val = pd.read_parquet(get_file_path('ticker data', filename="AAPL_VAL.parquet"))
-test = pd.read_parquet(get_file_path('ticker data', filename="AAPL_TEST.parquet"))
+train = pd.read_parquet(get_file_path('ticker data', filename="train.parquet"))
+val = pd.read_parquet(get_file_path('ticker data', filename="val.parquet"))
+test = pd.read_parquet(get_file_path('ticker data', filename="test.parquet"))
 
 # Define the target column
-target_col = 'AAPL_Open'
+target_col = 'Open'
 
 # Get the features and target arrays
 x_train = train.drop([target_col], axis=1).values
@@ -57,8 +57,8 @@ callbacks = [stopping_callback]
 def run_model():
     clf = ak.TimeseriesForecaster(
         max_trials=1000,
-        lookback=10,
-        project_name='alpha3',
+        lookback=7,
+        project_name='AAPL_1D',
         overwrite=False,
         directory=get_file_path('models')
     )
