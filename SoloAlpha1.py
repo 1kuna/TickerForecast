@@ -61,6 +61,8 @@ def run_model():
         overwrite=False,
         objective='val_loss',
         directory=get_file_path('models'),
+        metrics='mean_absolute_percentage_error',
+        loss='mean_absolute_error',
     )
     return clf
 
