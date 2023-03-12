@@ -2,7 +2,6 @@ import pandas as pd
 import autokeras as ak
 import datetime
 import os
-from sklearn.model_selection import train_test_split
 import tensorflow as tf
 import numpy as np
 
@@ -22,12 +21,14 @@ def get_file_path(*subdirs, filename=None):
     return full_path
 
 # Read in the parquet file
-train = pd.read_parquet(get_file_path('ticker data', filename="train.parquet"))
-val = pd.read_parquet(get_file_path('ticker data', filename="val.parquet"))
-test = pd.read_parquet(get_file_path('ticker data', filename="test.parquet"))
+train = pd.read_parquet(get_file_path('intraday', filename=f'TRAIN_COMBINED.parquet'))
+val = pd.read_parquet(get_file_path(f'intraday', filename=f'VAL_COMBINED.parquet'))
+test = pd.read_parquet(get_file_path(f'intraday', filename=f'TEST_COMBINED.parquet'))
 
 # Define the target column
-target_col = 'Open'
+target_col = 'open'
+
+print(train.dtypes)
 
 # Get the features and target arrays
 x_train = train.drop([target_col], axis=1).values
@@ -56,10 +57,11 @@ callbacks = [stopping_callback]
 # Initialize the model
 def run_model():
     clf = ak.TimeseriesForecaster(
-        max_trials=1000,
-        lookback=7,
-        project_name='AAPL_1D',
+        max_trials=250,
+        lookback=4380,
+        project_name='3D',
         overwrite=False,
+        objective='val_loss',
         directory=get_file_path('models')
     )
     return clf
@@ -67,7 +69,7 @@ def run_model():
 clf = run_model()
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=None, shuffle=False, callbacks=callbacks)
+clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=None, shuffle=False)
 
 # Evaluate the model but if there is an error, clear the session and try again
 try:
