@@ -21,13 +21,15 @@ def get_file_path(*subdirs, filename=None):
     full_path = full_path.replace("/", "\\")
     return full_path
 
+ticker = 'AAPL'
+
 # Read in the parquet file
-train = pd.read_parquet(get_file_path('ticker data', filename="train.parquet"))
-val = pd.read_parquet(get_file_path('ticker data', filename="val.parquet"))
-test = pd.read_parquet(get_file_path('ticker data', filename="test.parquet"))
+train = pd.read_parquet(get_file_path(f'intraday\\TICKERS\\{ticker}\\training', filename=f'{ticker}_TRAIN.parquet'))
+val = pd.read_parquet(get_file_path(f'intraday\\TICKERS\\{ticker}\\training', filename=f'{ticker}_VAL.parquet'))
+test = pd.read_parquet(get_file_path(f'intraday\\TICKERS\\{ticker}\\training', filename=f'{ticker}_TEST.parquet'))
 
 # Define the target column
-target_col = 'Open'
+target_col = 'open'
 
 # Get the features and target arrays
 x_train = train.drop([target_col], axis=1).values
@@ -56,10 +58,11 @@ callbacks = [stopping_callback]
 # Initialize the model
 def run_model():
     clf = ak.TimeseriesForecaster(
-        max_trials=1000,
-        lookback=7,
-        project_name='AAPL_1D',
+        max_trials=250,
+        lookback=4032,
+        project_name='AAPL_INTRADAY_4032',
         overwrite=False,
+        objective='val_loss',
         directory=get_file_path('models')
     )
     return clf
