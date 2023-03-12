@@ -4,6 +4,7 @@ import datetime
 import os
 import tensorflow as tf
 import numpy as np
+import sklearn.preprocessing as sk
 
 # Set TensorFlow log level to error
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -38,6 +39,15 @@ y_val = val[target_col].values
 x_test = test.drop([target_col], axis=1).values
 y_test= test[target_col].values
 
+print(x_train.shape, y_train.shape)
+print(x_train.dtype, y_train.dtype)
+
+scaler = sk.MinMaxScaler()
+
+x_train_scaled = scaler.fit_transform(x_train)
+x_val_scaled = scaler.fit_transform(x_val)
+x_test_scaled = scaler.fit_transform(x_test)
+
 # Define callbacks
 # tensorboard_callback = tf.keras.callbacks.TensorBoard(
 #     log_dir=tensorboard_dir, histogram_freq=50, 
@@ -56,20 +66,20 @@ callbacks = [stopping_callback]
 def run_model():
     clf = ak.TimeseriesForecaster(
         max_trials=250,
-        lookback=2190,
+        lookback=1,
         project_name='3D',
         overwrite=False,
         objective='val_loss',
         directory=get_file_path('models'),
-        metrics='mean_absolute_percentage_error',
-        loss='mean_absolute_error',
+        metrics='mape',
+        loss='mae',
     )
     return clf
 
 clf = run_model()
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=None, shuffle=False)
+clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=10, shuffle=False)
 
 # Evaluate the model but if there is an error, clear the session and try again
 try:
