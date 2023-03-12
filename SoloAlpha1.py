@@ -66,20 +66,20 @@ callbacks = [stopping_callback]
 def run_model():
     clf = ak.TimeseriesForecaster(
         max_trials=250,
-        lookback=1,
+        lookback=3200,
         project_name='3D',
         overwrite=False,
         objective='val_loss',
         directory=get_file_path('models'),
         metrics='mape',
-        loss='mae',
+        loss='huber_loss'
     )
     return clf
 
 clf = run_model()
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=10, shuffle=False)
+clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=None, shuffle=False, batch_size=64)
 
 # Evaluate the model but if there is an error, clear the session and try again
 try:

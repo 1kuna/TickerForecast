@@ -33,14 +33,19 @@ matrix = pd.concat(dfs).sort_values('time')
 # Reorder the columns
 matrix = matrix[['time', 'ticker'] + [c for c in matrix.columns if c not in ['time', 'ticker']]]
 
-# Set the time column as datetime and the rest as float64
+# Set the time column as datetime
 matrix['time'] = pd.to_datetime(matrix['time'])
 matrix['time'] = matrix['time'].apply(lambda x: x.timestamp())
 matrix['time'] = matrix['time'].astype('float64')
 
+# matrix['time'] = pd.to_datetime(matrix['time'])
+# matrix['time'] = matrix['time'].apply(lambda x: x.value).astype("float64")
+
 # Set all columns besides time and ticker as float64
 matrix[matrix.columns.difference(['time'])] = matrix[matrix.columns.difference(['time'])].astype('float64')
 
+matrix = matrix.dropna(axis=0, how='any')
+
 # Print the resulting matrix
-matrix.to_csv(get_file_path('intraday', filename=f'VAL_COMBINED.csv'), index=False)
-matrix.to_parquet(get_file_path('intraday', filename=f'VAL_COMBINED.parquet'), index=False)
+matrix.to_csv(get_file_path('intraday', filename=f'TRAIN_COMBINED.csv'), index=False)
+matrix.to_parquet(get_file_path('intraday', filename=f'TRAIN_COMBINED.parquet'), index=False)
