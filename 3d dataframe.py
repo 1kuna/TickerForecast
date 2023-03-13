@@ -38,9 +38,6 @@ matrix['time'] = pd.to_datetime(matrix['time'])
 matrix['time'] = matrix['time'].apply(lambda x: x.timestamp())
 matrix['time'] = matrix['time'].astype('float64')
 
-# matrix['time'] = pd.to_datetime(matrix['time'])
-# matrix['time'] = matrix['time'].apply(lambda x: x.value).astype("float64")
-
 # Set all columns besides time and ticker as float64
 matrix[matrix.columns.difference(['time'])] = matrix[matrix.columns.difference(['time'])].astype('float64')
 
