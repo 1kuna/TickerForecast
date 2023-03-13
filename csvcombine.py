@@ -13,10 +13,11 @@ def get_file_path(*subdirs, filename=None):
 
 df = pd.DataFrame()
 
-df = pd.concat([pd.read_csv(f, index_col='time') for f in glob.glob(get_file_path('intraday\\TICKERS\\MSFT', filename='*.csv'))])
+df = pd.concat([pd.read_csv(f, index_col='time') for f in glob.glob(get_file_path('intraday\\g\\val', filename='*.csv'))])
 
 # Drop all rows with NaN values and sort by date and time
 df.sort_index(inplace=True)
 df.drop_duplicates(inplace=True)
 
-df.to_csv(get_file_path('intraday\\TICKERS\\NVDA', filename='COMBINED.csv'))
+df.to_csv(get_file_path('intraday\\HERE', filename='VAL_COMBINED.csv'))
+df.to_parquet(get_file_path('intraday\\HERE', filename='VAL_COMBINED.parquet'))
