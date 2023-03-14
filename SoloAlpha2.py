@@ -94,6 +94,9 @@ strategy = tf.distribute.MultiWorkerMirroredStrategy(cluster_resolver=cluster_re
 with strategy.scope():
     clf = run_model()
 
+# Print the distribution strategy
+print("Number of devices: {}".format(strategy.num_replicas_in_sync))
+
 # Train the AutoKeras model
 clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=5, shuffle=False, batch_size=256, callbacks=callbacks)
 
