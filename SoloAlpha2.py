@@ -12,14 +12,17 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # Initialize current time
 currentTime = datetime.datetime.now().strftime('%m-%d-%Y %H-%M-%S')
 
-project_name = '3D2'
+project_name = 'DISTRO'
 
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-  try:
-    tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=6144)])
-  except RuntimeError as e:
-    print(e)
+gpu_limit = None
+
+if gpu_limit is not None:
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=gpu_limit)])
+        except RuntimeError as e:
+            print(e)
 
 # Define function to get full file path
 def get_file_path(*subdirs, filename=None):
@@ -49,12 +52,11 @@ x_test = test.drop([target_col], axis=1).values
 y_test= test[target_col].values
 
 stopping_callback = tf.keras.callbacks.EarlyStopping(
-    monitor="val_loss",
+    monitor="loss",
     patience=50
 )
 checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     filepath=get_file_path('models\\checkpoints'),
-    monitor='val_loss',
     save_best_only=False,
     save_weights_only=False,
     verbose=1,
@@ -83,7 +85,7 @@ os.environ['TF_CONFIG'] = json.dumps({
     'cluster': {
         'worker': ['192.168.0.223:2222', '192.168.0.183:2222']
     },
-    'task': {'type': 'worker', 'index': 0}
+    'task': {'type': 'worker', 'index': 1}
 })
 print("Environment variables set...")
 
@@ -107,7 +109,7 @@ print("Model initialized with scope...")
 print("Number of devices: {}".format(strategy.num_replicas_in_sync))
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=1, shuffle=False, batch_size=256, callbacks=callbacks)
+clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=2, shuffle=False, batch_size=256, callbacks=callbacks)
 
 # Evaluate the model but if there is an error, clear the session and try again
 try:

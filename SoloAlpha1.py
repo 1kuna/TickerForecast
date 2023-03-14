@@ -4,13 +4,14 @@ import datetime
 import os
 import tensorflow as tf
 import numpy as np
-import sklearn.preprocessing as sk
 
 # Set TensorFlow log level to error
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # Initialize current time
 currentTime = datetime.datetime.now().strftime('%m-%d-%Y %H-%M-%S')
+
+project_name = '3D2'
 
 # Define function to get full file path
 def get_file_path(*subdirs, filename=None):
@@ -47,18 +48,28 @@ y_test= test[target_col].values
 # )
 stopping_callback = tf.keras.callbacks.EarlyStopping(
     monitor="val_loss",
-    patience=30
+    patience=50
+)
+
+# Create checkpoint folder if it doesn't exist
+if not os.path.exists(get_file_path(f'models\\checkpoints\\{project_name}')):
+    os.makedirs(get_file_path(f'models\\checkpoints\\{project_name}'))
+
+checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+    filepath=get_file_path(f'models\\checkpoints\\{project_name}'),
+    verbose=1,
+    save_freq=1
 )
 
 # Define callbacks list
-callbacks = [stopping_callback]
+callbacks = [stopping_callback, checkpoint_callback]
 
 # Initialize the model
 def run_model():
     clf = ak.TimeseriesForecaster(
-        # max_trials=250,
+        max_trials=5,
         lookback=5120,
-        project_name='3D',
+        project_name=project_name,
         overwrite=False,
         objective='val_loss',
         directory=get_file_path('models'),
@@ -70,7 +81,7 @@ def run_model():
 clf = run_model()
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=5, shuffle=False, batch_size=256)
+clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=5, shuffle=False, batch_size=256, callbacks=callbacks)
 
 # Evaluate the model but if there is an error, clear the session and try again
 try:
