@@ -84,14 +84,14 @@ os.environ['TF_CONFIG'] = json.dumps({
     'task': {'type': 'worker', 'index': 0}
 })
 
-# Define the strategy
-strategy = tf.distribute.MultiWorkerMirroredStrategy()
-
 # Create a TensorFlow cluster resolver
 cluster_resolver = tf.distribute.cluster_resolver.TFConfigClusterResolver()
 
+# Define the strategy
+strategy = tf.distribute.MultiWorkerMirroredStrategy(cluster_resolver=cluster_resolver)
+
 # Initialize the AutoKeras model
-with tf.distribute.MirroredStrategy().scope():
+with strategy.scope():
     clf = run_model()
 
 # Train the AutoKeras model
