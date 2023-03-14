@@ -1,5 +1,0 @@
-import pandas as pd
-
-df = pd.read_csv("B:\\Users\\Zach\\Downloads\\AirQualityUCI.csv")
-
-print(df.shape, df.dtypes)
