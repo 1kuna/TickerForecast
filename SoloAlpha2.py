@@ -13,6 +13,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # Initialize current time
 currentTime = datetime.datetime.now().strftime('%m-%d-%Y %H-%M-%S')
 
+project_name = '3D2'
+
 # Define function to get full file path
 def get_file_path(*subdirs, filename=None):
     base_path = os.path.dirname(os.path.abspath(__file__))
@@ -51,7 +53,7 @@ stopping_callback = tf.keras.callbacks.EarlyStopping(
     patience=30
 )
 checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    filepath=get_file_path('models\\checkpoints', filename=f'3D-{currentTime}.h5'),
+    filepath=get_file_path('models\\checkpoints', filename=f'{project_name}-{currentTime}.h5'),
     monitor='val_loss',
     save_best_only=False,
     save_weights_only=False,
@@ -67,7 +69,7 @@ def run_model():
     clf = ak.TimeseriesForecaster(
         # max_trials=250,
         lookback=5120,
-        project_name='3D2',
+        project_name=project_name,
         overwrite=False,
         objective='val_loss',
         directory=get_file_path('models'),
