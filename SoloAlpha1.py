@@ -39,15 +39,6 @@ y_val = val[target_col].values
 x_test = test.drop([target_col], axis=1).values
 y_test= test[target_col].values
 
-print(x_train.shape, y_train.shape)
-print(x_train.dtype, y_train.dtype)
-
-scaler = sk.MinMaxScaler()
-
-x_train_scaled = scaler.fit_transform(x_train)
-x_val_scaled = scaler.fit_transform(x_val)
-x_test_scaled = scaler.fit_transform(x_test)
-
 # Define callbacks
 # tensorboard_callback = tf.keras.callbacks.TensorBoard(
 #     log_dir=tensorboard_dir, histogram_freq=50, 
@@ -65,8 +56,8 @@ callbacks = [stopping_callback]
 # Initialize the model
 def run_model():
     clf = ak.TimeseriesForecaster(
-        max_trials=250,
-        lookback=3200,
+        # max_trials=250,
+        lookback=5120,
         project_name='3D',
         overwrite=False,
         objective='val_loss',
@@ -79,7 +70,7 @@ def run_model():
 clf = run_model()
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=None, shuffle=False, batch_size=64)
+clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=5, shuffle=False, batch_size=256)
 
 # Evaluate the model but if there is an error, clear the session and try again
 try:
