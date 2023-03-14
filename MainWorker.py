@@ -5,6 +5,8 @@ import os
 import tensorflow as tf
 import numpy as np
 import json
+import socket
+import time
 
 # Set TensorFlow log level to error
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -49,11 +51,12 @@ x_test = test.drop([target_col], axis=1).values
 y_test= test[target_col].values
 
 stopping_callback = tf.keras.callbacks.EarlyStopping(
-    monitor="loss",
-    patience=50
+    monitor="val_loss",
+    patience=30
 )
 checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    filepath=get_file_path('models\\checkpoints'),
+    filepath=get_file_path('models\\checkpoints', filename=f'{project_name}-{currentTime}.h5'),
+    monitor='val_loss',
     save_best_only=False,
     save_weights_only=False,
     verbose=1,
@@ -80,7 +83,7 @@ def run_model():
 # Set the environment variables
 os.environ['TF_CONFIG'] = json.dumps({
     'cluster': {
-        'worker': ['192.168.0.223:2222', '192.168.0.183:2222']
+        'worker': ['192.168.0.183:2222', '192.168.0.223:2223']
     },
     'task': {'type': 'worker', 'index': 0}
 })
@@ -94,31 +97,44 @@ print("Cluster resolver created...")
 strategy = tf.distribute.MultiWorkerMirroredStrategy(cluster_resolver=cluster_resolver)
 print("Strategy defined...")
 
-# Initialize the AutoKeras model
-clf = run_model()
-
-# Initialize the model with the strategy
-with strategy.scope():
-    clf
-print("Model initialized with scope...")
-
-# Print the number of workers
-print("Number of devices: {}".format(strategy.num_replicas_in_sync))
-
-# Train the AutoKeras model
-clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=2, shuffle=False, batch_size=256, callbacks=callbacks)
-
-# Evaluate the model but if there is an error, clear the session and try again
-try:
-    print("Evaluating model...")
-    predictions = clf.predict(x_test)
-    error = np.mean((np.abs(y_test - predictions) / np.abs(predictions)) * 100)
-    print(f"Percentage error: {error:.2f}")
-except:
-    print("Error evaluating model, clearing session and trying again...")
-    tf.keras.backend.clear_session()
+def train_model(strategy):
+    # Initialize the AutoKeras model
     clf = run_model()
-    print("Evaluating model...")
-    predictions = clf.predict(x_test)
-    error = np.mean((np.abs(y_test - predictions) / np.abs(predictions)) * 100)
-    print(f"Percentage error: {error:.2f}")
+
+    # Initialize the model with the strategy
+    with strategy.scope():
+        clf
+
+    # Print the number of workers
+    print("Number of devices: {}".format(strategy.num_replicas_in_sync))
+
+    # Train the AutoKeras model
+    clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=1, shuffle=False, batch_size=256, callbacks=callbacks)
+
+    # Evaluate the model but if there is an error, clear the session and try again
+    try:
+        print("Evaluating model...")
+        predictions = clf.predict(x_test)
+        error = np.mean((np.abs(y_test - predictions) / np.abs(predictions)) * 100)
+        print(f"Percentage error: {error:.2f}")
+    except:
+        print("Error evaluating model, clearing session and trying again...")
+        tf.keras.backend.clear_session()
+        clf = run_model()
+        print("Evaluating model...")
+        predictions = clf.predict(x_test)
+        error = np.mean((np.abs(y_test - predictions) / np.abs(predictions)) * 100)
+        print(f"Percentage error: {error:.2f}")
+
+while True:
+    # Check if the second worker is available
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex(('192.168.0.223', 2222))
+    if result == 0:
+        # Second worker is available, start training the model
+        strategy = tf.distribute.MultiWorkerMirroredStrategy(cluster_resolver=cluster_resolver)
+        train_model(strategy)
+    else:
+        # Second worker is not available, wait for 60 seconds and check again
+        print("Second worker is not available, waiting...")
+        time.sleep(60)
