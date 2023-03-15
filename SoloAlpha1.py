@@ -51,14 +51,13 @@ stopping_callback = tf.keras.callbacks.EarlyStopping(
     patience=50
 )
 
-# Create checkpoint folder if it doesn't exist
-if not os.path.exists(get_file_path(f'models\\checkpoints\\{project_name}')):
-    os.makedirs(get_file_path(f'models\\checkpoints\\{project_name}'))
+# # Create checkpoint folder if it doesn't exist
+# if not os.path.exists(get_file_path(f'models\\checkpoints\\{project_name}')):
+#     os.makedirs(get_file_path(f'models\\checkpoints\\{project_name}'))
 
-checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    filepath=get_file_path(f'models\\checkpoints\\{project_name}'),
-    verbose=1,
-    save_freq=1
+checkpoint_callback = tf.keras.callbacks.BackupAndRestore(
+    backup_dir=get_file_path(f'models\\checkpoints\\{project_name}'),
+    save_freq='epoch'
 )
 
 # Define callbacks list
@@ -67,7 +66,7 @@ callbacks = [stopping_callback, checkpoint_callback]
 # Initialize the model
 def run_model():
     clf = ak.TimeseriesForecaster(
-        max_trials=5,
+        max_trials=100,
         lookback=5120,
         project_name=project_name,
         overwrite=False,
@@ -81,7 +80,7 @@ def run_model():
 clf = run_model()
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=5, shuffle=False, batch_size=256, callbacks=callbacks)
+clf.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=None, shuffle=False, batch_size=256, callbacks=callbacks)
 
 # Evaluate the model but if there is an error, clear the session and try again
 try:
