@@ -21,6 +21,9 @@ def get_file_path(*subdirs, filename=None):
     return full_path
 
 for ticker in tickers:
+    # For each ticker, print the name
+    print(ticker)
+
     # Create a directory for the ticker
     if not os.path.exists(get_file_path(f'intraday\\TICKERS2\\{ticker}')):
         os.makedirs(get_file_path(f'intraday\\TICKERS2\\{ticker}'))
@@ -120,7 +123,7 @@ for ticker in tickers:
                 # Read the CSV file and append it to the list
                 filepath = os.path.join(dir_path, filename)
                 suffix = filename.split("_")[1].split(".")[0]
-                if suffix == set:
+                if suffix == 'TRAIN':
                     ticker = filename.split("_")[0]
                     mx = pd.read_csv(filepath)
                     print(f'Ticker: {ticker}')
@@ -138,13 +141,13 @@ for ticker in tickers:
         # Set the time column as datetime
         matrix['time'] = pd.to_datetime(matrix['time'])
         matrix['time'] = matrix['time'].apply(lambda x: x.timestamp())
-        matrix['time'] = matrix['time'].astype('float64')
+        matrix['time'] = matrix['time'].astype('float32')
 
         # Set all columns besides time as float64
-        matrix[matrix.columns.difference(['time'])] = matrix[matrix.columns.difference(['time'])].astype('float64')
+        matrix[matrix.columns.difference(['time'])] = matrix[matrix.columns.difference(['time'])].astype('float32')
 
         # Drop all rows with NaN values
-        matrix = matrix.dropna(axis=0, how='any', inplace=True)
+        matrix = matrix.dropna(axis=0, how='any', inplace=False)
 
         # Print the resulting matrix
         matrix.to_csv(get_file_path(f'intraday\\TICKERS2', filename='COMBINED.csv'), index=False)

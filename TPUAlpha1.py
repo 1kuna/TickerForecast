@@ -80,7 +80,6 @@ clf = run_model()
 
 with strategy.scope():
     clf
-
 print("Past strategy scope")
 
 # Train the AutoKeras model

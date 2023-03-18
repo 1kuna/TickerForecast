@@ -18,6 +18,8 @@ def tfrecord_to_csv(input_file, output_file):
 
     # Define the feature dict
     feature_dict = {
+        'time': tf.io.FixedLenFeature([], dtype=tf.float32),
+        'open': tf.io.FixedLenFeature([], dtype=tf.float32),
         'high': tf.io.FixedLenFeature([], dtype=tf.float32),
         'low': tf.io.FixedLenFeature([], dtype=tf.float32),
         'close': tf.io.FixedLenFeature([], dtype=tf.float32),
@@ -39,8 +41,7 @@ def tfrecord_to_csv(input_file, output_file):
 
     # Define function to parse the serialized Example
     def parse_example(example):
-        parsed_example = tf.io.parse_single_example(example, feature_dict)
-        return {key: tf.keras.backend.eval(parsed_example[key]) for key in parsed_example}
+        return tf.io.parse_single_example(example, feature_dict)
 
     # Parse each serialized Example in the TFRecord file
     dataset = dataset.map(parse_example)
@@ -56,4 +57,4 @@ def tfrecord_to_csv(input_file, output_file):
     df.to_csv(output_file, index=False)
     print(f"CSV file saved to {output_file}")
 
-tfrecord_to_csv(get_file_path('intraday', filename=f'TRAIN_COMBINED.tfrecord'), get_file_path('intraday', filename=f'snap_COMBINED.csv'))
+tfrecord_to_csv(get_file_path('intraday/TICKERS2', filename=f'COMBINED.tfrecord'), get_file_path('intraday/TICKERS2', filename=f'RECORD.csv'))

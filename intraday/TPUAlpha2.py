@@ -1,68 +1,61 @@
-import pandas as pd
-import autokeras as ak
-import datetime
-import os
 import tensorflow as tf
-import numpy as np
-import petastorm
+import autokeras as ak
+import os
 
-from petastorm.codecs import ScalarCodec
-from petastorm.unischema import Unischema, UnischemaField
-from petastorm.pytorch import DataLoader
-from petastorm import make_batch_reader
+# # Set up TPU
+# resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='local')
+# tf.config.experimental_connect_to_cluster(resolver)
+# tf.tpu.experimental.initialize_tpu_system(resolver)
+# strategy = tf.distribute.TPUStrategy(resolver)
+# print("All devices: ", tf.config.list_logical_devices('TPU'))
+# print("Got past initialization")
 
 # Set TensorFlow log level to error
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-# Initialize current time
-currentTime = datetime.datetime.now().strftime('%m-%d-%Y %H-%M-%S')
+# Set automatic Mixed Precision
+os.environ['TF_ENABLE_AUTO_MIXED_PRECISION'] = '1'
 
-project_name = '3D2'
+project_name = 'TPUAlpha2'
+print("Project name: ", project_name)
 
-# Define the target column
-target_col = 'open'
+# Define the feature dictionary
+feature_dict = {
+    'time': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'ticker': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'open': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'high': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'low': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'close': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'volume': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'sma50': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'sma200': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'ema8': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'ema20': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'rsi': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'macd': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'stoch': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'vwap': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'aroon_up': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'aroon_down': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'roc': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'obv': tf.io.FixedLenFeature([], dtype=tf.float32),
+    'adi': tf.io.FixedLenFeature([], dtype=tf.float32)
+}
 
-# Define the schema for the dataset
-from petastorm.unischema import Unischema, UnischemaField, dict_to_spark_row
-from petastorm.codecs import ScalarCodec
+def parse_function(example_proto):
+    parsed_example = tf.io.parse_single_example(example_proto, feature_dict)
+    features = {k: tf.cast(v, dtype) for k, (v, dtype) in parsed_example.items()}
+    label = features.pop('open')  # Remove the 'open' column from the features and use it as the label
+    return features, label
 
-# Define the schema for your dataset
-schema = Unischema('TickerForecast', [
-    UnischemaField('time', np.float64, ()),
-    UnischemaField('ticker', np.float64, ()),
-    UnischemaField('open', np.float64, ()),
-    UnischemaField('high', np.float64, ()),
-    UnischemaField('low', np.float64, ()),
-    UnischemaField('close', np.float64, ()),
-    UnischemaField('volume', np.float64, ()),
-    UnischemaField('sma50', np.float64, ()),
-    UnischemaField('sma200', np.float64, ()),
-    UnischemaField('ema8', np.float64, ()),
-    UnischemaField('ema20', np.float64, ()),
-    UnischemaField('rsi', np.float64, ()),
-    UnischemaField('macd', np.float64, ()),
-    UnischemaField('stoch', np.float64, ()),
-    UnischemaField('vwap', np.float64, ()),
-    UnischemaField('aroon_up', np.float64, ()),
-    UnischemaField('aroon_down', np.float64, ()),
-    UnischemaField('roc', np.float64, ()),
-    UnischemaField('obv', np.float64, ()),
-    UnischemaField('adi', np.float64, ())
-])
+file_path = "O:\\Git\\TickerForecast\\intraday\\TICKERS2\\COMBINED.tfrecord"
+dataset = tf.data.TFRecordDataset(file_path)
+dataset = dataset.map(parse_function)
 
-
-# Define the PyTorch dataloader
-def create_dataloader(data_paths, batch_size, shuffle=True):
-    with make_batch_reader(data_paths, schema, reader_pool_type='process', workers_count=8) as reader:
-        dataloader = DataLoader(reader, batch_size=batch_size, shuffling_queue_capacity=4096, shuffling_queue_capacity_per_producer=1024, shuffling_multiproducer_mode='interleaved' if shuffle else None)
-    return dataloader
-
-# Read in the parquet file
-train_paths = ['./TRAIN_COMBINED.parquet']
-val_paths = ['./VAL_COMBINED.parquet']
-
-train_dataloader = create_dataloader(train_paths, batch_size=1024)
-val_dataloader = create_dataloader(val_paths, batch_size=1024)
+# Batch and prefetch the datasets
+batch_size = 1024
+dataset = dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)
 
 # Define callbacks
 stopping_callback = tf.keras.callbacks.EarlyStopping(
@@ -88,11 +81,15 @@ def run_model():
         objective='val_loss',
         directory='./models',
         metrics='mape',
-        loss='huber_loss'
+        loss='mae'
     )
     return clf
 
 clf = run_model()
 
+# with strategy.scope():
+#     clf
+# print("Past strategy scope")
+
 # Train the AutoKeras model
-clf.fit(train_dataloader, validation_data=val_dataloader, epochs=None, shuffle=False, callbacks=callbacks)
+clf.fit(dataset, epochs=None, shuffle=False, callbacks=callbacks)

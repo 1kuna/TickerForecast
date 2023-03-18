@@ -12,14 +12,15 @@ def get_file_path(*subdirs, filename=None):
     return full_path
 
 # Define input and output file paths
-input_file = get_file_path('intraday', filename=f'TRAIN_COMBINED.csv')
-output_file = get_file_path(f'intraday', filename=f'TRAIN_COMBINED.tfrecord')
+input_file = get_file_path('intraday/TICKERS2', filename='COMBINED_scaled.csv')
+output_file = get_file_path('intraday/TICKERS2', filename='COMBINED_scaled.tfrecord')
 
 data = pd.read_csv(input_file)
 
 # Define the feature dictionary
 feature_dict = {
     'time': tf.float32,
+    'ticker': tf.float32,
     'open': tf.float32,
     'high': tf.float32,
     'low': tf.float32,
@@ -40,6 +41,7 @@ feature_dict = {
     'adi': tf.float32
 }
 
+# Function to convert a value to a tf.train.Feature
 def _float_feature(value):
     return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
 
