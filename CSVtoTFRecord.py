@@ -1,60 +1,48 @@
-import os
 import tensorflow as tf
+import numpy as np
 import pandas as pd
 
-# Define function to get full file path
-def get_file_path(*subdirs, filename=None):
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    full_path = os.path.join(base_path, *subdirs)
-    if filename is not None:
-        full_path = os.path.join(full_path, filename)
-    full_path = full_path.replace("/", "\\")
-    return full_path
-
-# Define input and output file paths
-input_file = get_file_path('intraday/TICKERS2', filename='COMBINED_scaled.csv')
-output_file = get_file_path('intraday/TICKERS2', filename='COMBINED_scaled.tfrecord')
-
-data = pd.read_csv(input_file)
-
 # Define the feature dictionary
-feature_dict = {
-    'time': tf.float32,
-    'ticker': tf.float32,
-    'open': tf.float32,
-    'high': tf.float32,
-    'low': tf.float32,
-    'close': tf.float32,
-    'volume': tf.float32,
-    'sma50': tf.float32,
-    'sma200': tf.float32,
-    'ema8': tf.float32,
-    'ema20': tf.float32,
-    'rsi': tf.float32,
-    'macd': tf.float32,
-    'stoch': tf.float32,
-    'vwap': tf.float32,
-    'aroon_up': tf.float32,
-    'aroon_down': tf.float32,
-    'roc': tf.float32,
-    'obv': tf.float32,
-    'adi': tf.float32
-}
+feature_columns = ['time', 'open', 'high', 'low', 'close', 'volume',
+                   'sma50', 'sma200', 'ema8', 'ema20', 'rsi', 'macd',
+                   'stoch', 'vwap', 'aroon_up', 'aroon_down', 'roc',
+                   'obv', 'adi']
 
-# Function to convert a value to a tf.train.Feature
-def _float_feature(value):
-    return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
+# Define the file path to write the TFRecord file
+file_path = "O:\\Git\\TickerForecast\\intraday\\TICKERS2\\COMBINED.tfrecord"
 
-# Function to convert a row in the CSV to a tf.train.Example
-def csv_row_to_example(row):
-    features = {}
-    for col, dtype in feature_dict.items():
-        if dtype == tf.float32:
-            features[col] = _float_feature(row[col])
-    return tf.train.Example(features=tf.train.Features(feature=features))
+# Read in the CSV file
+data = pd.read_csv("O:\\Git\\TickerForecast\\intraday\\TICKERS2\\COMBINED.csv")
 
-# Write the TFRecord file
-with tf.io.TFRecordWriter(output_file) as writer:
-    for _, row in data.iterrows():
-        example = csv_row_to_example(row)
+# Convert columns to float32
+data = data.astype('float32')
+
+# Define the target column
+target_col = 'open'
+
+# Get the features and target arrays
+features = data.drop([target_col], axis=1)
+target = data[target_col]
+
+# Open the TFRecord file for writing
+with tf.io.TFRecordWriter(file_path) as writer:
+    for i in range(len(features)):
+        # Extract the features and target for this row
+        row_features = features.iloc[i]
+        row_target = target.iloc[i]
+
+        # Convert the features and target to numpy arrays
+        features_array = np.array(row_features)
+        target_array = np.array(row_target)
+
+        # Create a feature dictionary
+        feature = {}
+        for col, value in zip(features.columns, features_array):
+            feature[col] = tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
+        feature['open'] = tf.train.Feature(float_list=tf.train.FloatList(value=[target_array]))
+
+        # Create an example protobuf message
+        example = tf.train.Example(features=tf.train.Features(feature=feature))
+
+        # Serialize the example to a string and write it to the TFRecord file
         writer.write(example.SerializeToString())

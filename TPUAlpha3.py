@@ -20,10 +20,9 @@ project_name = 'TPUAlpha2'
 print("Project name: ", project_name)
 
 # Define the feature dictionary
-feature_dict = {
+feature_columns = {
     'time': tf.io.FixedLenFeature([], dtype=tf.float32),
     'ticker': tf.io.FixedLenFeature([], dtype=tf.float32),
-    'open': tf.io.FixedLenFeature([], dtype=tf.float32),
     'high': tf.io.FixedLenFeature([], dtype=tf.float32),
     'low': tf.io.FixedLenFeature([], dtype=tf.float32),
     'close': tf.io.FixedLenFeature([], dtype=tf.float32),
@@ -43,19 +42,37 @@ feature_dict = {
     'adi': tf.io.FixedLenFeature([], dtype=tf.float32)
 }
 
-def parse_function(example_proto):
-    parsed_example = tf.io.parse_single_example(example_proto, feature_dict)
-    features = {k: tf.cast(v, dtype) for k, (v, dtype) in parsed_example.items()}
-    label = features.pop('open')  # Remove the 'open' column from the features and use it as the label
-    return features, label
+def parse_features_function(example_proto):
+    # Define the feature description using the 'feature_columns' dictionary
+    feature_description = {}
+    for col in feature_columns:
+        feature_description[col] = tf.io.FixedLenFeature([], dtype=tf.float32)
+    return tf.io.parse_single_example(example_proto, feature_description)
 
-file_path = "O:\\Git\\TickerForecast\\intraday\\TICKERS2\\COMBINED.tfrecord"
-dataset = tf.data.TFRecordDataset(file_path)
-dataset = dataset.map(parse_function)
+def parse_targets_function(example_proto):
+    feature_description = {'open': tf.io.FixedLenFeature([], dtype=tf.float32)}
+    return tf.io.parse_single_example(example_proto, feature_description)['open']
+
+# Read the features and targets from two separate TFRecord files
+features_file_path = "O:\\Git\\TickerForecast\\intraday\\TICKERS2\\COMBINED_scaled_features.tfrecord"
+target_file_path = "O:\\Git\\TickerForecast\\intraday\\TICKERS2\\COMBINED_scaled_targets.tfrecord"
+features_dataset = tf.data.TFRecordDataset(features_file_path)
+target_dataset = tf.data.TFRecordDataset(target_file_path)
+
+dataset_length = sum(1 for _ in features_dataset)
+
+# Apply the parsing functions to the datasets
+features_dataset = features_dataset.map(parse_features_function)
+targets_dataset = target_dataset.map(parse_targets_function)
+
+# Zip the two datasets together
+dataset_length = sum(1 for _ in features_dataset)
+target_dataset = target_dataset.apply(tf.data.experimental.assert_cardinality(dataset_length))
 
 # Batch and prefetch the datasets
-batch_size = 1024
-dataset = dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+# batch_size = 1024
+# target_dataset = target_dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+# features_dataset = features_dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)
 
 # Define callbacks
 stopping_callback = tf.keras.callbacks.EarlyStopping(
@@ -79,17 +96,13 @@ def run_model():
         project_name=project_name,
         overwrite=False,
         objective='val_loss',
-        directory='./models',
+        directory='models',
         metrics='mape',
-        loss='mae'
+        loss='huber_loss'
     )
     return clf
 
 clf = run_model()
 
-# with strategy.scope():
-#     clf
-# print("Past strategy scope")
-
 # Train the AutoKeras model
-clf.fit(dataset, epochs=None, shuffle=False, callbacks=callbacks)
+clf.fit(features_dataset, target_dataset, epochs=None, shuffle=False)

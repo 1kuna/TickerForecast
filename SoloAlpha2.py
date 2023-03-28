@@ -7,6 +7,9 @@ import tensorflow as tf
 # Set TensorFlow log level to error
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+# Set XLA flag
+os.environ['TF_XLA_FLAGS'] = '--tf_xla_enable_xla_devices'
+
 # Set automatic Mixed Precision
 os.environ['TF_ENABLE_AUTO_MIXED_PRECISION'] = '1'
 print(tf.keras.backend.floatx())
@@ -65,4 +68,4 @@ def run_model():
 clf = run_model()
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, epochs=None, shuffle=False, batch_size=256, callbacks=callbacks)
+clf.fit(x_train, y_train, epochs=10, shuffle=False, batch_size=256, callbacks=callbacks)
