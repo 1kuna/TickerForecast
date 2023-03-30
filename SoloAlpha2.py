@@ -11,6 +11,19 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 os.environ['TF_ENABLE_AUTO_MIXED_PRECISION'] = '1'
 print(tf.keras.backend.floatx())
 
+# Define the VRAM limit
+vram_limit = None
+
+# Limit the VRAM TensorFlow can use
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if vram_limit is not None:
+    if gpus:
+        try:
+            tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=vram_limit)])
+            print(f"VRAM limit set to {vram_limit / 1024} GB")
+        except RuntimeError as e:
+            print(e)
+
 # Initialize current time
 currentTime = datetime.datetime.now().strftime('%m-%d-%Y %H-%M-%S')
 
