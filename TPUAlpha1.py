@@ -5,27 +5,27 @@ import os
 import tensorflow as tf
 
 # Set up TPU
-resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='local')
+resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='eu-pod')
 tf.config.experimental_connect_to_cluster(resolver)
 tf.tpu.experimental.initialize_tpu_system(resolver)
 strategy = tf.distribute.TPUStrategy(resolver)
 print("All devices: ", tf.config.list_logical_devices('TPU'))
 print("Got past initialization")
 
-# Set TensorFlow log level to error
+# Set environment variables
+os.environ['TPU_NAME'] = 'eu-pod'
+os.environ['TPU_LOAD_LIBRARY'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
-# Set automatic Mixed Precision
 os.environ['TF_ENABLE_AUTO_MIXED_PRECISION'] = '1'
 
 # Initialize current time
 currentTime = datetime.datetime.now().strftime('%m-%d-%Y %H-%M-%S')
 
-project_name = 'TPUAlpha1'
+project_name = 'TPUAlpha1-2'
 print("Project name: ", project_name)
 
 # Read in the parquet file
-train = pd.read_parquet('./COMBINED_scaled.parquet')
+train = pd.read_parquet('./COMBINED_scaled2.parquet')
 
 # Define the target column
 target_col = 'open'

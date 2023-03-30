@@ -1,0 +1,12 @@
+import pandas as pd
+
+
+# Convert csv to parquet
+df = pd.read_csv('K:\\Git\\TickerForecast\\intraday\\TICKERS2\\COMBINED_scaled.csv')
+df.to_parquet('K:\\Git\\TickerForecast\\intraday\\TICKERS2\\COMBINED_scaled2.parquet')
+
+# Read in the parquet file
+dataset = pd.read_parquet('K:\\Git\\TickerForecast\\intraday\\TICKERS2\\COMBINED_scaled2.parquet')
+
+# Print the column names
+print(dataset.columns)

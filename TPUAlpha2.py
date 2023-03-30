@@ -5,13 +5,13 @@ import os
 import tensorflow as tf
 import tensorflow_io as tfio
 
-# # Set up TPU
-# resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='local')
-# tf.config.experimental_connect_to_cluster(resolver)
-# tf.tpu.experimental.initialize_tpu_system(resolver)
-# strategy = tf.distribute.TPUStrategy(resolver)
-# print("All devices: ", tf.config.list_logical_devices('TPU'))
-# print("Got past initialization")
+# Set up TPU
+resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='local')
+tf.config.experimental_connect_to_cluster(resolver)
+tf.tpu.experimental.initialize_tpu_system(resolver)
+strategy = tf.distribute.TPUStrategy(resolver)
+print("All devices: ", tf.config.list_logical_devices('TPU'))
+print("Got past initialization")
 
 # Set TensorFlow log level to error
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
