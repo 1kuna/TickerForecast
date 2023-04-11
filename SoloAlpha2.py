@@ -27,7 +27,7 @@ if vram_limit is not None:
 # Initialize current time
 currentTime = datetime.datetime.now().strftime('%m-%d-%Y %H-%M-%S')
 
-project_name = 'TF2'
+project_name = 'TF3'
 
 # Define function to get full file path
 def get_file_path(*subdirs, filename=None):
