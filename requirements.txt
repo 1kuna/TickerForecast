@@ -1,0 +1,7 @@
+"tensorflow<2.11" 
+scikit-learn
+autokeras
+pyarrow
+fastparquet
+pandas
+ta

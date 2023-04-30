@@ -39,7 +39,7 @@ def get_file_path(*subdirs, filename=None):
     return full_path
 
 # Read in the parquet file
-dataset = pd.read_parquet(get_file_path('intraday/TICKERS2', filename=f'COMBINED_scaled.parquet'))
+dataset = pd.read_parquet(get_file_path('intraday/TICKERS2', filename='COMBINED_scaled.parquet'))
 
 # Define the target column
 target_col = 'open'

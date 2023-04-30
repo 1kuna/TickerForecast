@@ -1,9 +1,0 @@
-import pandas as pd
-
-# Convert parquet to csv
-train = pd.read_parquet('K:\\Git\\TickerForecast\\intraday\\TICKERS2\\COMBINED_scaled.parquet')
-
-# Convert time column from float64 to datetime
-train['time'] = pd.to_datetime(train['time'], unit='s')
-
-train.to_csv('K:\\Git\\TickerForecast\\intraday\\TICKERS2\\COMBINED_scaled.csv', index=False)
