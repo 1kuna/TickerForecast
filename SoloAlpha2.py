@@ -59,7 +59,7 @@ checkpoint_callback = tf.keras.callbacks.BackupAndRestore(
 )
 
 # Define callbacks list
-callbacks = [stopping_callback, checkpoint_callback]
+callbacks = [checkpoint_callback]
 
 # Initialize the model
 def run_model():
