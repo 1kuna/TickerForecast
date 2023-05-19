@@ -1,3 +1,5 @@
+# TODO: Add functionality to the batch file to sync with Git before running the script
+
 import pandas as pd
 import autokeras as ak
 import datetime
