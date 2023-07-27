@@ -31,7 +31,7 @@ print(tf.keras.backend.floatx())
 # Initialize current time
 currentTime = datetime.datetime.now().strftime('%m-%d-%Y %H-%M-%S')
 
-project_name = 'TF4'
+project_name = 'TF5'
 
 # Define function to get full file path
 def get_file_path(*subdirs, filename=None):
@@ -68,7 +68,7 @@ callbacks = [checkpoint_callback]
 # Initialize the model
 def run_model():
     clf = ak.TimeseriesForecaster(
-        max_trials=200,
+        max_trials=500,
         lookback=5120,
         project_name=project_name,
         overwrite=False,
@@ -82,4 +82,4 @@ def run_model():
 clf = run_model()
 
 # Train the AutoKeras model
-clf.fit(x_train, y_train, epochs=20, shuffle=False, batch_size=256, callbacks=callbacks)
+clf.fit(x_train, y_train, epochs=10, shuffle=False, batch_size=128, callbacks=callbacks)
